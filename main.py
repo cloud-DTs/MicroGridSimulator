@@ -1,16 +1,19 @@
-# This is a sample Python script.
+import os
+import logging
+from src.Collector.collector import collect_all_simulation_files
+from src.MGModel.mgmodel import MGModel
 
-# Press Umschalt+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Strg+8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
+INPUT_PATH = "DigitalTwinProfileSysMLv2/output/"
+STANDARD_IMPORT_PREFIX = "simulation"
+ST_TWIN_NAME = "StTwin"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+def main():
+    res = collect_all_simulation_files(INPUT_PATH,ST_TWIN_NAME,STANDARD_IMPORT_PREFIX)
+    for simulation_file in res:
+        mg = MGModel(simulation_file.config_hierarchy_path,simulation_file.config_iot_devices_path)
+        print(mg.to_simulator_json())
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
