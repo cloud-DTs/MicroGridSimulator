@@ -15,6 +15,13 @@ package NovemberScenario {
             #constAttribute :>> import_price_timeseries_path {
                 :>> value = "./data/prices_nov.csv";
             }
+            #constAttribute :>> export_price_timeseries_path {
+                :>> value = "./data/prices_nov.csv";
+            }
+
+            #constAttribute :>> co2_per_kWh_timeseries_path {
+                :>> value = "./data/prices_nov.csv";
+            }
         }
 
         #entity battery :>> battery {
@@ -35,6 +42,12 @@ package NovemberScenario {
             #constAttribute :>> arrival_date      { :>> value = "2025-11-01T08:00"; }
             #constAttribute :>> departure_date    { :>> value = "2025-11-01T16:00"; }
             #constAttribute :>> preference_wallbox { :>> value = "wallbox_Keba"; }
+        }
+
+        #entity load :>> load {
+            #constAttribute :>> load_timeseries_path {
+                :>> value = "./data/load_nov.csv";
+            }
         }
     }
 }

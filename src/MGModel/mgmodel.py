@@ -1,4 +1,7 @@
 import json
+import os.path
+
+from src.Collector.SimulationFiles import SimulationFilePaths
 from src.entities.battery import BatteryEntity
 from src.entities.pv import PVEntity
 from src.entities.grid import GridEntity
@@ -9,7 +12,7 @@ from src.entities.microgrid import MicroGridEntity
 from src.entities.simulation import SimulationEntity
 
 class MGModel:
-    def __init__(self, hierarchy_path: str, iot_devices_path: str):
+    def __init__(self,simulatorFilePaths: SimulationFilePaths):
         self.battery    = None
         self.pv         = None
         self.grid       = None
@@ -18,7 +21,8 @@ class MGModel:
         self.load       = None
         self.wallboxes  = []
         self.cars       = []
-        self._load(hierarchy_path, iot_devices_path)
+        self.name = simulatorFilePaths.name
+        self._load(simulatorFilePaths.config_hierarchy_path, simulatorFilePaths.config_iot_devices_path)
 
     def _load(self, hierarchy_path: str, iot_devices_path: str):
         with open(hierarchy_path) as f:
@@ -46,13 +50,14 @@ class MGModel:
             elif name == "load":
                 self.load = LoadEntity(props)
             elif name.startswith("wallbox_"):
+                name = name.replace("wallbox_", "")
                 self.wallboxes.append(WallBoxEntity(name, props))
             elif name.startswith("car_"):
                 self.cars.append(CarEntity(name, props))
             elif name == "microgrid":
                 self.microgrid = MicroGridEntity(props,self.cars)
 
-    def to_simulator_json(self) -> dict:
+    def to_simulator_dict(self) -> dict:
         return {
             "testbed": {
                 "battery": self.battery.to_testbed(),
@@ -69,3 +74,11 @@ class MGModel:
                 "initial_values": self.simulation.to_simulation(),
             }
         }
+
+    def to_simulator_json(self,path) -> str:
+        import json
+        if not os.path.exists(path):
+            os.mkdir(path)
+        with open(f"{os.path.join(path,self.name) }.json","w") as f:
+            json.dump(self.to_simulator_dict(),f,indent=4)
+        return f"{os.path.join(path,self.name)}.json"

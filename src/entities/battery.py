@@ -23,11 +23,14 @@ class BatteryEntity(AbstractEntity):
                     self._val("threshold_mid"),
                     self._val("threshold_low"),
                 ],
-                "dynamic_threshold_strategy": None if dynamic_threshold_strategy == "null" else dynamic_threshold_strategy,
             }
         }
-        if dynamic_threshold_strategy == "co2_based":
-            res["control"]["co2_reward"] = self._load_csv("co2_reward_timeseries_path")
+        dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
+        if dynamic_threshold_strategy:
+            res["control"]["dynamic_threshold_strategy"] = dynamic_threshold_strategy
+            if dynamic_threshold_strategy == "co2_based":
+                res["control"]["co2_reward"] = self._load_csv("co2_reward_timeseries_path")
+
 
         return res
 
