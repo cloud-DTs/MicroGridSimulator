@@ -3,6 +3,9 @@ from src.entities.AbstracteEntity import AbstractEntity
 
 class BatteryEntity(AbstractEntity):
 
+    def __init__(self,prop,thresholds):
+        super().__init__(prop)
+        self.thresholds = thresholds
     def to_testbed(self) -> dict:
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
         res =  {
@@ -18,12 +21,7 @@ class BatteryEntity(AbstractEntity):
             ],
             "control": {
                 "ID": self._val("control_ID"),
-                "thresholds": [
-                    self._val("threshold_high"),
-                    self._val("threshold_mid"),
-                    self._val("threshold_low"),
-                ],
-            }
+                "thresholds": self.thresholds,            }
         }
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
         if dynamic_threshold_strategy:

@@ -3,8 +3,8 @@ from src.entities.AbstracteEntity import AbstractEntity
 
 class SimulationEntity(AbstractEntity):
     def __init__(self,prop):
-        self.prop = prop
         super().__init__(prop)
+        self.name = self._val("simulationName")
 
     def to_simulation(self) -> dict:
         return {

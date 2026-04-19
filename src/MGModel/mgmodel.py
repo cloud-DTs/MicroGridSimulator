@@ -12,7 +12,7 @@ from src.entities.microgrid import MicroGridEntity
 from src.entities.simulation import SimulationEntity
 
 class MGModel:
-    def __init__(self,simulatorFilePaths: SimulationFilePaths):
+    def __init__(self,simulatorFilePaths: SimulationFilePaths,thresholdpath):
         self.battery    = None
         self.pv         = None
         self.grid       = None
@@ -21,14 +21,17 @@ class MGModel:
         self.load       = None
         self.wallboxes  = []
         self.cars       = []
-        self.name = simulatorFilePaths.name
-        self._load(simulatorFilePaths.config_hierarchy_path, simulatorFilePaths.config_iot_devices_path)
+        self.name = "Simulation"
 
-    def _load(self, hierarchy_path: str, iot_devices_path: str):
+        self._load(simulatorFilePaths.config_hierarchy_path, simulatorFilePaths.config_iot_devices_path,thresholdpath)
+
+    def _load(self, hierarchy_path: str, iot_devices_path: str, thresholdpath: str):
         with open(hierarchy_path) as f:
             hierarchy = json.load(f)
         with open(iot_devices_path) as f:
             devices = json.load(f)
+        with open(thresholdpath) as f:
+            thresholds = json.load(f)
         props_index = {
             d["id"]: {p["name"]: p for p in d["properties"]}
             for d in devices
@@ -40,13 +43,15 @@ class MGModel:
             props    = props_index.get(const_id, {})
 
             if name == "battery":
-                self.battery = BatteryEntity(props)
+                self.battery = BatteryEntity(props,thresholds)
             elif name == "pv":
                 self.pv = PVEntity(props)
             elif name == "grid":
                 self.grid = GridEntity(props)
             elif name == "simulation":
                 self.simulation = SimulationEntity(props)
+                self.name = self.simulation.name
+                print(name)
             elif name == "load":
                 self.load = LoadEntity(props)
             elif name.startswith("wallbox_"):
@@ -76,6 +81,8 @@ class MGModel:
         }
 
     def to_simulator_json(self,path) -> str:
+        print(path)
+        print(self.name)
         import json
         if not os.path.exists(path):
             os.mkdir(path)

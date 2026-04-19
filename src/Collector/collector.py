@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from src.Collector.SimulationFiles import SimulationFilePaths
 
 
-def collect_all_simulation_files(input_path,standardTwinName,standardImportPrefix) -> list[SimulationFilePaths]:
+def collect_all_simulation_config_files(input_path, standardTwinName, standardImportPrefix) -> list[SimulationFilePaths]:
     res = []
     visited = set()
     for root, dirs, files in os.walk(input_path):
