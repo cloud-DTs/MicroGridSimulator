@@ -87,6 +87,19 @@ package ModelDefault {
             :>> value default "//";
             :>> dataType default AttributeDataType::STRING;
         }
+
+        #constAttribute pv_start_time{
+            :>> value default "06:30";
+            :>> dataType default AttributeDataType::STRING;
+        }
+        #constAttribute pv_end_time{
+            :>> value default "18:30";
+            :>> dataType default AttributeDataType::STRING;
+        }
+        #constAttribute noise_level{
+            :>> value default "0.1";
+            :>> dataType default AttributeDataType::DOUBLE;
+        }
     }
 
     #Entity def Grid{
@@ -130,7 +143,7 @@ package ModelDefault {
             :>> dataType default AttributeDataType::INTEGER;
         }
         #constAttribute control_ID {
-            :>> value default "adaptive-proportial-uniform-wallbox-strategy";
+            :>> value default "adaptive-proportional-uniform-wallbox-strategy";
             :>> dataType default AttributeDataType::STRING;
         }
         #constAttribute pv_threshold {

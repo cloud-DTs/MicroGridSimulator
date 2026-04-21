@@ -13,14 +13,14 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-
+import dotenv
+dotenv.load_dotenv()
 
 
 def main():
     res = collect_all_simulation_config_files(INPUT_PATH, ST_TWIN_NAME, STANDARD_IMPORT_PREFIX)
     manager = ExperimentManager(OUTPUT_DATA_PATH,API_BASE_URL)
     for simulation_file in res:
-        print("Starting simulation")
         mg = MGModel(simulation_file,THRESHOLDS_JSON_PATH)
         manager.add_simulation_payload(mg.simulation.name,mg)
 

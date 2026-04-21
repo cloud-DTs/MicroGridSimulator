@@ -1,10 +1,10 @@
-from src.entities.AbstracteEntity import AbstractEntity
+from src.entities.AbstracteEntity import AbstractEntity, TimeSeriesEntity
 
 
-class BatteryEntity(AbstractEntity):
+class BatteryEntity(TimeSeriesEntity):
 
-    def __init__(self,prop,thresholds):
-        super().__init__(prop)
+    def __init__(self,prop,thresholds,step):
+        super().__init__(prop,step)
         self.thresholds = thresholds
     def to_testbed(self) -> dict:
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
@@ -21,7 +21,7 @@ class BatteryEntity(AbstractEntity):
             ],
             "control": {
                 "ID": self._val("control_ID"),
-                "thresholds": self.thresholds,            }
+                "thresholds": self.thresholds['thresholds'],            }
         }
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
         if dynamic_threshold_strategy:

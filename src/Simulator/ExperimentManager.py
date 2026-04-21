@@ -8,11 +8,9 @@ import logging
 from pandas import DataFrame
 import os
 import time
-
+from sshtunnel import SSHTunnelForwarder
 from src.MGModel.mgmodel import MGModel
 from src.Simulator.SimulationRequest import Simulation
-
-
 class ExperimentManager:
 
     def __init__(self,data_output_path,url):
@@ -27,12 +25,19 @@ class ExperimentManager:
 
     def run_simulations(self):
         dfs = []
-        for name, payload in self.paths.items():
-            print(name)
-            sim = Simulation(payload,self.url)
-            result_df = sim.run_simulation()
-            result_df["simulation_name"] = name
-            dfs.append(result_df)
+        with SSHTunnelForwarder(
+                (os.getenv("SSH_HOST"), 22),
+                ssh_username=os.getenv("SSH_USERNAME"),
+                ssh_password=os.getenv("SSH_PASSWORD"),
+                remote_bind_address=(os.getenv("SIM_HOST"), 1337),
+                local_bind_address=('127.0.0.1', int(os.getenv("SIM_PORT")))
+        ) as tunnel:
+            for name, payload in self.paths.items():
+                print(name)
+                sim = Simulation(payload)
+                result_df = sim.run_simulation()
+                result_df["simulation_name"] = name
+                dfs.append(result_df)
 
         df = pd.concat(dfs, ignore_index=True)
         self.saveData(df)

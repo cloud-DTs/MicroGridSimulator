@@ -20,7 +20,7 @@ package BaselineEnvironmentalConditions {
                 }
 
                 :>> co2_per_kWh_timeseries_path {
-                    :>> value = "./data/prices_nov.csv";
+                    :>> value = "./data/co2_nov.csv";
                 }
             }
             :>> battery {

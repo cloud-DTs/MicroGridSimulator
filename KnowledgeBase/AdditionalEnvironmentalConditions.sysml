@@ -20,7 +20,7 @@ package AdditionalEnvironmentalConditions {
                 }
 
                 :>> co2_per_kWh_timeseries_path {
-                    :>> value = "./data/prices_nov.csv";
+                    :>> value = "./data/co2_nov.csv";
                 }
             }
             :>> battery {
@@ -44,7 +44,7 @@ package AdditionalEnvironmentalConditions {
             :>> simulation {
                 :>> simulationName { :>> value = "AdditionalNovember"; }
                 :>> start_time { :>> value = "2025-11-01T00:00"; }
-                :>> end_time   { :>> value = "2025-11-30T00:00"; }
+                :>> end_time   { :>> value = "2025-11-30T23:59"; }
             }
 
             car1 :>charging_events{

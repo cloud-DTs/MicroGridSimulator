@@ -1,9 +1,9 @@
-from src.entities.AbstracteEntity import AbstractEntity
+from src.entities.AbstracteEntity import AbstractEntity, TimeSeriesEntity
 
 
-class GridEntity(AbstractEntity):
-    def __init__(self,prop):
-        super().__init__(prop)
+class GridEntity(TimeSeriesEntity):
+    def __init__(self,prop,step):
+        super().__init__(prop,step)
 
     def to_testbed(self) -> dict:
         return {
