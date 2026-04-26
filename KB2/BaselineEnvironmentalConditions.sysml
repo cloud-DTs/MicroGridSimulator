@@ -1,17 +1,15 @@
-package AdditionalEnvironmentalConditions {
+package BaselineEnvironmentalConditions {
     private import MetaModelDigitalTwin::*;
     private import ModelDefault::*;
     private import StandardMG::*;
 
-    #Twin def Add :> StTwin {
+    #Twin def Basie :> StTwin{
 
             :>> pv {
                 :>> pv_timeseries_path {
                     :>> value = "./data/basel_pv_nov.csv";
                 }
-                
             }
-
             :>> grid {
                 :>> export_price_timeseries_path {
                     :>> value = "./data/prices_nov.csv";
@@ -20,7 +18,7 @@ package AdditionalEnvironmentalConditions {
             :>> battery {
                 :>> co2_reward_timeseries_path {
                     :>> value = "./data/co2_nov.csv";
-
+                
                 }
                 :>> dynamic_threshold_strategy {
                     :>> value = "co2_based";
@@ -36,9 +34,9 @@ package AdditionalEnvironmentalConditions {
             }
 
             :>> simulation {
-                :>> simulationName { :>> value = "AdditionalNovember"; }
+                :>> simulationName { :>> value = "BaseLineNovember"; }
                 :>> start_time { :>> value = "2025-11-01T00:00"; }
-                :>> end_time   { :>> value = "2025-11-30T00:00"; }
+                :>> end_time   { :>> value = "2025-11-02T00:00"; }
             }
 
             car1 :>charging_events{
@@ -56,7 +54,7 @@ package AdditionalEnvironmentalConditions {
                 :>> load_timeseries_path {
                     :>> value = "./data/load_nov.csv";
                 }
-
+            
             }
     }
 }

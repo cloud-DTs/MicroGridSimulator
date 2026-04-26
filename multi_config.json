@@ -1,0 +1,20 @@
+[
+  {
+    "name":"November",
+    "BaseLineSysMlPath": "./KnowledgeBase/BaselineEnvironmentalConditions.sysml",
+    "AdditionalEnvSysMlPath": "./KnowledgeBase/AdditionalEnvironmentalConditions.sysml"
+
+  },
+  {
+    "name":"December",
+    "BaseLineSysMlPath": "./KB2/BaselineEnvironmentalConditions.sysml",
+    "AdditionalEnvSysMlPath": "./KB2/AnyOtherName.sysml"
+
+  },
+  {
+    "name":"June",
+    "BaseLineSysMlPath": "./KB2/BaselineEnvironmentalConditions.sysml",
+    "AdditionalEnvSysMlPath": "./KB2/AnyOtherName.sysml"
+
+  }
+]

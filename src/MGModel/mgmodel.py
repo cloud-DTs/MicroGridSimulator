@@ -23,7 +23,7 @@ class MGModel:
         self.load       = None
         self.wallboxes  = []
         self.cars       = []
-        self.name = "Simulation"
+        self.name = simulatorFilePaths.name
         self.steps = 0
 
         self._load(simulatorFilePaths.config_hierarchy_path, simulatorFilePaths.config_iot_devices_path,thresholdpath)
@@ -45,7 +45,6 @@ class MGModel:
                 const_id = entity["id"] + "const_component"
                 props = props_index.get(const_id, {})
                 self.simulation = SimulationEntity(props)
-                self.name = self.simulation.name
                 sim_dict = self.simulation.to_simulation()
                 start = datetime.fromisoformat(sim_dict["SIMULATION_START_TIME"])
                 end = datetime.fromisoformat(sim_dict["SIMULATION_END_TIME"])

@@ -8,16 +8,19 @@ It reads your experiment configuration from SysML files, converts them into simu
 ## Architecture
 
 ```
-KnowledgeBase/*.sysml          ← Your experiment configuration
+multi_config.json              ← Experiment pair definitions
         ↓
-DigitalTwinProfileSysMLv2      ← SysML v2 Converter (Docker)
+KnowledgeBase/*.sysml          ← Your SysML experiment files
         ↓
-output/*/config_hierarchy.json
-output/*/config_iot_devices.json
+DigitalTwinProfileSysMLv2      ← SysML v2 Converter
+        ↓
+(temp)/*/config_hierarchy.json
+(temp)/*/config_iot_devices.json
         ↓
 MicroGridSimulator (this tool) ← KB Preparer + Experiment Runner
         ↓
-results/<BaselineName>_<AdditionalName>_<timestamp>.csv
+SimulatorDataOutput/<timestamp>.csv
+SimulatorDataOutput/<timestamp>_kpi_summary.csv
 ```
 
 ---
@@ -57,14 +60,34 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Your experiments are defined in two SysML files inside `./KnowledgeBase/`:
+### Experiment pairs — `multi_config.json`
 
-| File | Purpose |
+Define one or more baseline/additional pairs:
+
+```json
+[
+  {
+    "name": "November",
+    "BaseLineSysMlPath":      "KnowledgeBase/BaselineEnvironmentalConditions.sysml",
+    "AdditionalEnvSysMlPath": "KnowledgeBase/AdditionalEnvironmentalConditions.sysml"
+  },
+  {
+    "name": "December",
+    "BaseLineSysMlPath":      "KnowledgeBase/BaselineDecember.sysml",
+    "AdditionalEnvSysMlPath": "KnowledgeBase/AdditionalDecember.sysml"
+  }
+]
+```
+
+| Field | Description |
 |---|---|
-| `BaselineEnvironmentalConditions.sysml` | Reference simulation (e.g. Nov 1) |
-| `AdditionalEnvironmentalConditions.sysml` | Collection simulation (e.g. Nov 2–30) |
+| `name` | Identifier for this experiment pair, used in output filenames and KPI summary |
+| `BaseLineSysMlPath` | Path to the baseline SysML file |
+| `AdditionalEnvSysMlPath` | Path to the additional SysML file |
 
-Both files follow the same structure and directly mirror the simulator's parameters:
+### SysML file structure
+
+Both baseline and additional files follow the same structure:
 
 ```sysml
 package BaselineEnvironmentalConditions {
@@ -95,12 +118,12 @@ package BaselineEnvironmentalConditions {
         }
 
         :>> simulation {
-            :>> simulationName { :>> value = "BaseLineNovember"; }  // used to identify results
+            :>> simulationName { :>> value = "BaseLineNovember"; }
             :>> start_time     { :>> value = "2025-11-01T00:00"; }
-            :>> end_time       { :>> value = "2025-11-02T00:00"; }  // 1 day = next day 00:00
+            :>> end_time       { :>> value = "2025-11-02T00:00"; }
         }
 
-        car1 :> charging_events {   // charging events must start with 'car'
+        car1 :> charging_events {
             :>> arrival_date       { :>> value = "2025-11-01T08:00"; }
             :>> departure_date     { :>> value = "2025-11-01T16:00"; }
             :>> preference_wallbox { :>> value = "wallbox_Keba"; }
@@ -113,7 +136,9 @@ package BaselineEnvironmentalConditions {
 }
 ```
 
-### Timeseries CSV Format
+> **Important:** The baseline Twin name must contain `Base` (case-insensitive) so the KPI summary can identify it correctly — e.g. `#Twin def Base` or `#Twin def BaseLineNovember`.
+
+### Timeseries CSV format
 
 All timeseries files (PV, prices, CO2, load) must be CSV files with a single `value` column.
 The number of rows must exactly match the number of simulation steps:
@@ -122,7 +147,7 @@ The number of rows must exactly match the number of simulation steps:
 steps = (end_time - start_time) / timestep
 ```
 
-Example for 1 day with `timestep = 3600s` (1 hour):
+Example for 1 day with `timestep = 3600s`:
 
 ```csv
 value
@@ -131,12 +156,9 @@ value
 50.0
 200.0
 500.0
-...
 ```
 
-### Battery Thresholds
-
-Battery control thresholds are configured separately in `Threshold.json`:
+### Battery thresholds — `KnowledgeBase/Thresholds.json`
 
 ```json
 {
@@ -150,43 +172,56 @@ Values represent `[threshold_high, threshold_mid, threshold_low]` as percentage 
 
 ## Running
 
-### Step 1 — Convert SysML to JSON
-
 ```bash
-cd DigitalTwinProfileSysMLv2
-python -m src.main ../KnowledgeBase/
-cd ..
-```
-
-This reads all `.sysml` files in `KnowledgeBase/` and generates the converter output under `DigitalTwinProfileSysMLv2/output/`.
-
-### Step 2 — Run the experiment
-
-```bash
+# uses multi_config.json by default
 python main.py
+
+# or with a custom config file
+python main.py --config my_experiment.json
 ```
 
-This prepares the simulator payloads, runs both simulations, and saves the results.
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `multi_config.json` | Path to the experiment pair config JSON |
+
+The tool will automatically:
+1. Copy the SysML files into a temporary directory
+2. Run the SysML converter
+3. Build simulator payloads
+4. Run all simulations via SSH tunnel
+5. Save results and KPI summary
 
 ---
 
 ## Output
 
-Results are saved to:
+Results are saved to `SimulatorDataOutput/`:
 
 ```
-results/<BaselineName>_<AdditionalName>_<YYYYMMDD_HHMMSS>.csv
+SimulatorDataOutput/<PairNames>_<timestamp>.csv
+SimulatorDataOutput/<PairNames>_<timestamp>_kpi_summary.csv
 ```
 
-Example: `results/BaseLineNovember_AdditionalNovember_20251119_143022.csv`
+### Raw results CSV
 
-The CSV contains one row per timestep with all simulator output columns, plus a `simulation_name` column to distinguish between baseline and additional runs:
+One row per timestep, all simulator output columns plus identifiers:
 
-| datetime | grid_import_cost | grid_co2_production | simulation_name    |
-|---|---|---|---|
-| 2025-11-01T00:00 | 12.3 | 45.1 | BaseLineNovember   |
-| ... | ... | ... | ...                |
-| 2025-11-02T00:00 | 14.1 | 48.3 | AdditionalNovember |
+| datetime | grid_import_cost | grid_co2_production | simulation_name | simulation_run |
+|---|---|---|---|---|
+| 2025-11-01T00:00 | 12.3 | 45.1 | November | BaselineEnvironmentalConditions |
+| ... | | | | |
+
+### KPI summary CSV
+
+Aggregated averages and relative deviation per pair:
+
+| simulation_name | simulation_run | avg_grid_import_cost | avg_grid_co2_production | count |
+|---|---|---|---|---|
+| November | BaselineEnvironmentalConditions | 12.3 | 45.1 | 720 |
+| November | AdditionalEnvironmentalConditions | 14.1 | 48.3 | 720 |
+| November | relative_deviation_% | 14.63 | 7.1 | 1.0 |
+| December | BaselineDecember | ... | ... | 744 |
+| ... | | | | |
 
 ### Key KPIs
 
@@ -194,4 +229,3 @@ The CSV contains one row per timestep with all simulator output columns, plus a 
 |---|---|
 | `grid_import_cost` | cents |
 | `grid_co2_production` | gCO2eq |
----
