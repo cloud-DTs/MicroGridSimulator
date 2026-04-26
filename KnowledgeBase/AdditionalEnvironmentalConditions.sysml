@@ -9,18 +9,12 @@ package AdditionalEnvironmentalConditions {
                 :>> pv_timeseries_path {
                     :>> value = "./data/basel_pv_nov.csv";
                 }
+                
             }
 
             :>> grid {
-                :>> import_price_timeseries_path {
-                    :>> value = "./data/prices_nov.csv";
-                }
                 :>> export_price_timeseries_path {
                     :>> value = "./data/prices_nov.csv";
-                }
-
-                :>> co2_per_kWh_timeseries_path {
-                    :>> value = "./data/co2_nov.csv";
                 }
             }
             :>> battery {

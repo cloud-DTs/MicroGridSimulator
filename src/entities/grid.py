@@ -1,3 +1,5 @@
+import logging
+
 from src.entities.AbstracteEntity import AbstractEntity, TimeSeriesEntity
 
 
@@ -14,9 +16,14 @@ class GridEntity(TimeSeriesEntity):
 
     def to_simulation(self) -> dict:
         return {
-            "import_price": self._load_csv("import_price_timeseries_path"),
+            "import_price": self.useApiIfEmpty("import_price_timeseries_path"),
             "export_price": self._load_csv("export_price_timeseries_path"),
-            "co2_per_kWh": self._load_csv("co2_per_kWh_timeseries_path"),
+            "co2_per_kWh": self.useApiIfEmpty("co2_per_kWh_timeseries_path"),
             "grid_limit": self._val("grid_limit"),
         }
 
+    def useApiIfEmpty(self,key):
+        if self._val(key) == "//":
+            logging.info(f"Grid attribute {key} is //. Using API")
+            return True
+        return self._load_csv(key)

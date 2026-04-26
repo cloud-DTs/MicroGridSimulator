@@ -38,6 +38,7 @@ class ExperimentManager:
                 result_df = sim.run_simulation()
                 result_df["simulation_name"] = name
                 dfs.append(result_df)
+            time.sleep(2)
 
         df = pd.concat(dfs, ignore_index=True)
         self.saveData(df)
