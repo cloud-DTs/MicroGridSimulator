@@ -116,3 +116,7 @@ class ExperimentManager:
                 summary = pd.concat([summary, pd.DataFrame([relative])], ignore_index=True)
 
             all_summaries.append(summary)
+        final = pd.concat(all_summaries, ignore_index=True)
+        kpi_path = main_path.replace(".csv", "_kpi_summary.csv")
+        final.to_csv(kpi_path, index=False)
+        logging.info(f"Saved KPI summary to {kpi_path}")
