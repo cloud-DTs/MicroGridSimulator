@@ -74,38 +74,26 @@ def simulate(configPath):
 
     try:
         for pair in pairs:
-            inputDir = tempfile.TemporaryDirectory()
-            outputDir = tempfile.TemporaryDirectory()
-            temp_dirs.extend([inputDir, outputDir])
+            for sysmlFile, is_baseline in [(pair.additional, False), (pair.baseline, True)]:
+                inputDir = tempfile.TemporaryDirectory()
+                outputDir = tempfile.TemporaryDirectory()
+                temp_dirs.extend([inputDir, outputDir])
+                for file in [sysmlFile,LIB_MODEL_PATH, STTwinSysmlPath]:
+                    if not os.path.exists(file):
+                        logging.error(f"File not found: {file}")
+                        sys.exit(1)
+                    dest = os.path.join(inputDir.name, os.path.basename(file))
+                    with open(dest, "w") as f, open(file, "r") as orig:
+                        f.write(orig.read())
 
-            for file in [pair.baseline, pair.additional, LIB_MODEL_PATH, STTwinSysmlPath]:
-                if not os.path.exists(file):
-                    logging.error(f"File not found: {file}")
-                    sys.exit(1)
-                dest = os.path.join(inputDir.name, os.path.basename(file))
-                with open(dest, "w") as f, open(file, "r") as orig:
-                    f.write(orig.read())
-
-            runSysmlConverter(inputDir.name, outputDir.name)
-            simPathDict = collect_all_simulation_config_files(
-                outputDir.name, ST_TWIN_NAME, STANDARD_IMPORT_PREFIX,
-            )
-            for key, item in simPathDict.items():
-                if containsTwin(key, pair.baseline):
-                    item.name = os.path.splitext(os.path.basename(pair.baseline))[0]
-                    logging.info(f"Twin '{key}' matched to baseline: {item.name}")
-                else:
-                    item.name = os.path.splitext(os.path.basename(pair.additional))[0]
-                    logging.info(f"Twin '{key}' matched to additional: {item.name}")
-
-            if not simPathDict:
-                logging.error(f"Pair '{pair.name}': no simulation configs found in {outputDir.name}")
-                continue
-
-            for simulation_file in simPathDict.values():
-                mg = MGModel(simulation_file, THRESHOLDS_JSON_PATH)
-                logging.info(f"{pair.name}_{simulation_file.name}")
-                manager.add_simulation_payload(pair.name,simulation_file.name, mg)
+                runSysmlConverter(inputDir.name, outputDir.name)
+                simPath = collect_all_simulation_config_files(outputDir.name, ST_TWIN_NAME, STANDARD_IMPORT_PREFIX)
+                if simPath is None:
+                    logging.error(f"Pair '{pair.name}': no simulation configs found in {outputDir.name}")
+                    continue
+                simPath.name = os.path.splitext(os.path.basename(sysmlFile))[0]
+                mg = MGModel(simPath, THRESHOLDS_JSON_PATH)
+                manager.add_simulation_payload(pair.name, simPath.name, mg, is_baseline)
 
         if not manager.paths:
             logging.error("No simulations registered — aborting.")

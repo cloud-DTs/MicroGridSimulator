@@ -19,12 +19,13 @@ class ExperimentManager:
         self.data_output_path = data_output_path
         self.url = url
 
-    def add_simulation_payload(self, pair, sim_name, payload: MGModel):
-        if pair not in self.paths:
-            self.paths[pair] = {}
-        if sim_name in self.paths[pair]:
-            logging.warning(f"Simulation {sim_name} already exists in Pair {pair}")
-        self.paths[pair][sim_name] = payload
+    def add_simulation_payload(self, pair_name, sim_name, payload: MGModel, isBaseline):
+        if pair_name not in self.paths:
+            self.paths[pair_name] = {"base": {}, "additional": {}}
+        if isBaseline:
+            self.paths[pair_name]["base"][sim_name] = payload
+        else:
+            self.paths[pair_name]["additional"][sim_name] = payload
 
     def run_simulations(self):
         dfs = []
@@ -38,15 +39,16 @@ class ExperimentManager:
                 local_bind_address=('127.0.0.1', int(os.getenv("SIM_PORT")))
         ) as tunnel:
             tasks = [
-                (pair_name, sim_name, payload)
-                for pair_name, runs in self.paths.items()
+                (pair_name, role, sim_name, payload)
+                for pair_name, roles in self.paths.items()
+                for role, runs in roles.items()
                 for sim_name, payload in runs.items()
             ]
 
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 futures = {
-                    executor.submit(self._run_single, pair_name, sim_name, payload): (pair_name, sim_name)
-                    for pair_name, sim_name, payload in tasks
+                    executor.submit(self._run_single, pair_name, role, sim_name, payload): (pair_name, sim_name)
+                    for pair_name, role, sim_name, payload in tasks
                 }
                 for future in as_completed(futures):
                     pair_name, sim_name = futures[future]
@@ -63,11 +65,12 @@ class ExperimentManager:
         self.saveData(df)
 
     @staticmethod
-    def _run_single(pair_name: str, sim_name: str, payload) -> pd.DataFrame:
+    def _run_single(pair_name: str, role: str, sim_name: str, payload) -> pd.DataFrame:
         sim = Simulation(payload)
         result_df = sim.run_simulation()
         result_df["simulation_name"] = pair_name
         result_df["simulation_run"] = sim_name
+        result_df["role"] = role
         return result_df
 
     def get_output_path(self) -> str:
@@ -93,12 +96,13 @@ class ExperimentManager:
             counts = group.groupby("simulation_run").size().reset_index(name="count")
             summary = summary.merge(counts, on="simulation_run")
 
-            baseline_names = [n for n in group["simulation_run"].unique() if "base" in n.lower()]
-            additional_names = [n for n in group["simulation_run"].unique() if "base" not in n.lower()]
+            role_map = group.drop_duplicates("simulation_run").set_index("simulation_run")["role"]
+            baseline_name = next((n for n in role_map.index if role_map[n] == "base"), None)
+            additional_name = next((n for n in role_map.index if role_map[n] == "additional"), None)
 
-            if baseline_names and additional_names:
-                baseline = summary[summary["simulation_run"] == baseline_names[0]].iloc[0]
-                additional = summary[summary["simulation_run"] == additional_names[0]].iloc[0]
+            if baseline_name and additional_name:
+                baseline = summary[summary["simulation_run"] == baseline_name].iloc[0]
+                additional = summary[summary["simulation_run"] == additional_name].iloc[0]
 
                 relative = {"simulation_name": pair_name, "simulation_run": "relative_deviation_%"}
                 for col in [f"avg_{c}" for c in kpi_cols]:
@@ -106,14 +110,9 @@ class ExperimentManager:
                     add_val = additional[col]
                     relative[col] = round(((add_val - base_val) / base_val) * 100, 2) if base_val != 0 else None
                 relative["count"] = round(
-                    counts[counts["simulation_run"] == additional_names[0]]["count"].values[0] /
-                    counts[counts["simulation_run"] == baseline_names[0]]["count"].values[0], 4
+                    counts[counts["simulation_run"] == additional_name]["count"].values[0] /
+                    counts[counts["simulation_run"] == baseline_name]["count"].values[0], 4
                 )
                 summary = pd.concat([summary, pd.DataFrame([relative])], ignore_index=True)
 
             all_summaries.append(summary)
-
-        final = pd.concat(all_summaries, ignore_index=True)
-        kpi_path = main_path.replace(".csv", "_kpi_summary.csv")
-        final.to_csv(kpi_path, index=False)
-        logging.info(f"Saved KPI summary to {kpi_path}")
