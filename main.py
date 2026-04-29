@@ -57,6 +57,8 @@ def containsTwin(name,path):
             return True
         else:
             return False
+def toJson(mg:MGModel,path):
+    mg.to_simulator_json(path)
 def simulate(configPath):
     if not os.path.exists(configPath):
         logging.error(f"Config file not found: {configPath}")
@@ -93,6 +95,8 @@ def simulate(configPath):
                     continue
                 simPath.name = os.path.splitext(os.path.basename(sysmlFile))[0]
                 mg = MGModel(simPath, THRESHOLDS_JSON_PATH)
+
+                toJson(mg,f"./{pair.name}/{simPath.name}")
                 manager.add_simulation_payload(pair.name, simPath.name, mg, is_baseline)
 
         if not manager.paths:

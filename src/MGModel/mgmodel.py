@@ -92,16 +92,11 @@ class MGModel:
                 "initial_values": self.simulation.to_simulation(),
             }
         }
-        with open("test.json", "w") as f:
-            json.dump(res, f, indent=4)
+       
         return res
 
     def to_simulator_json(self,path) -> str:
-        print(path)
-        print(self.name)
-        import json
-        if not os.path.exists(path):
-            os.mkdir(path)
-        with open(f"{os.path.join(path,self.name) }.json","w") as f:
+      
+        with open(f"{self.name}.json","w") as f:
             json.dump(self.to_simulator_dict(),f,indent=4)
         return f"{os.path.join(path,self.name)}.json"

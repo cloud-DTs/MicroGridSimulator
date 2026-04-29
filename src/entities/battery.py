@@ -7,6 +7,7 @@ class BatteryEntity(TimeSeriesEntity):
         super().__init__(prop,step)
         self.thresholds = thresholds
     def to_testbed(self) -> dict:
+        print(self.prop)
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
         res =  {
             "min_capacity":    self._val("min_capacity"),
@@ -21,10 +22,13 @@ class BatteryEntity(TimeSeriesEntity):
             ],
             "control": {
                 "ID": self._val("control_ID"),
-                "thresholds": self.thresholds['thresholds'],            }
+                "thresholds": [self._val("threshold_high"),self._val("threshold_mid"),self._val("threshold_low")],           
+                }
         }
         dynamic_threshold_strategy = self._val("dynamic_threshold_strategy")
         if dynamic_threshold_strategy:
+            if dynamic_threshold_strategy == "null":
+                return res
             res["control"]["dynamic_threshold_strategy"] = dynamic_threshold_strategy
             if dynamic_threshold_strategy == "co2_based":
                 res["control"]["co2_reward"] = self._load_csv("co2_reward_timeseries_path")

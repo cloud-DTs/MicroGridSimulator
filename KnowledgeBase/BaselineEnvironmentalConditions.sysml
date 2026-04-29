@@ -3,41 +3,38 @@ package BaselineEnvironmentalConditions {
     private import ModelDefault::*;
     private import StandardMG::*;
 
-    #Twin def Base :> StTwin{
+    #Twin def Basie :> StTwin{
 
             :>> pv {
                 :>> pv_timeseries_path {
-                    :>> value = "./data/basel_pv_nov.csv";
+                    :>> value = "./data/NovemberFirstTry/baseline_pov.csv";
                 }
             }
-
             :>> grid {
-                :>> import_price_timeseries_path {
-                    :>> value = "./data/prices_nov.csv";
-                }
                 :>> export_price_timeseries_path {
-                    :>> value = "./data/prices_nov.csv";
-                }
-
-                :>> co2_per_kWh_timeseries_path {
-                    :>> value = "./data/co2_nov.csv";
+                    :>> value = "./data/NovemberFirstTry/export_grid_price.csv";
                 }
             }
             :>> battery {
-                :>> co2_reward_timeseries_path {
-                    :>> value = "./data/co2_nov.csv";
-                
-                }
                 :>> dynamic_threshold_strategy {
-                    :>> value = "co2_based";
+                    :>> value = "null";
                 }
+                 :>>  threshold_high {
+                    :>> value default "90";
+                }
+                    :>> threshold_mid {
+            :>> value default "70";
+        }
+            :>> threshold_low {
+            :>> value default "10";
+        }
             }
             :>> microgrid{
                 :>>unbalanced_module {
                     :>> value = "0";
                 }
                 :>>number_charging_events {
-                    :>> value = "15";
+                    :>> value = "1";
                 }
             }
 
@@ -45,22 +42,13 @@ package BaselineEnvironmentalConditions {
                 :>> simulationName { :>> value = "BaseLineNovember"; }
                 :>> start_time { :>> value = "2025-11-01T00:00"; }
                 :>> end_time   { :>> value = "2025-11-02T00:00"; }
+                :>> timestep { :>> value = "900"; }
             }
 
-            car1 :>charging_events{
-               :>> arrival_date      { :>> value = "2025-11-01T08:00"; }
-               :>> departure_date    { :>> value = "2025-11-01T16:00"; }
-               :>> preference_wallbox { :>> value = "wallbox_Keba"; }
-            }
-            car2 :>charging_events{
-                :>> arrival_date      { :>> value = "2025-11-01T09:00"; }
-                :>> departure_date    { :>> value = "2025-11-01T17:00"; }
-                :>> preference_wallbox { :>> value = "wallbox_Versi"; }
-            }
 
             :>> load {
                 :>> load_timeseries_path {
-                    :>> value = "./data/load_nov.csv";
+                    :>> value = "./data/NovemberFirstTry/load_nov.csv";
                 }
             
             }

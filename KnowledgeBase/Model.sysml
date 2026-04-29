@@ -230,7 +230,7 @@ package ModelDefault {
         :>> dataType default AttributeDataType::STRING;
     }
     #constAttribute weekend_free {
-        :>> value default "true";
+        :>> value default "false";
         :>> dataType default AttributeDataType::STRING;
     }
     }
