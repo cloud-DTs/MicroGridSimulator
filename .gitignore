@@ -31,3 +31,4 @@ __pycache__
 TestOutput
 ThresholdSearch
 threshold.py
+KnowledgeBase/sim.json
