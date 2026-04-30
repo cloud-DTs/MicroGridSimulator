@@ -79,7 +79,6 @@ class MGModel:
         res = {
             "testbed": {
                 "battery": self.battery.to_testbed(),
-                "pv":      self.pv.to_testbed(),
                 "grid":    self.grid.to_testbed(),
                 "wallbox": [w.to_testbed() for w in self.wallboxes],
             },
