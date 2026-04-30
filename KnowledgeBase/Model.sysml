@@ -73,32 +73,9 @@ package ModelDefault {
 
     #Entity def PV{
 
-        #constAttribute max_output{
-            :>> value default "1400";
-            :>> dataType default AttributeDataType::INTEGER;
-        }
-
-        #constAttribute min_output{
-            :>> value default "0";
-            :>> dataType default AttributeDataType::INTEGER;
-        }
-
         #constAttribute pv_timeseries_path{
             :>> value default "//";
             :>> dataType default AttributeDataType::STRING;
-        }
-
-        #constAttribute pv_start_time{
-            :>> value default "06:30";
-            :>> dataType default AttributeDataType::STRING;
-        }
-        #constAttribute pv_end_time{
-            :>> value default "18:30";
-            :>> dataType default AttributeDataType::STRING;
-        }
-        #constAttribute noise_level{
-            :>> value default "0.1";
-            :>> dataType default AttributeDataType::DOUBLE;
         }
     }
 
