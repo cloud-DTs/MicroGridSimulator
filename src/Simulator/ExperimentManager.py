@@ -20,6 +20,8 @@ class ExperimentManager:
         self.url = url
 
     def add_simulation_payload(self, pair_name, sim_name, payload: MGModel, isBaseline):
+        print(f"Adding simulation payload for pair '{pair_name}', sim '{sim_name}', isBaseline={isBaseline}")
+        print(f"Payload: {payload.to_simulator_dict()}")
         if pair_name not in self.paths:
             self.paths[pair_name] = {"base": {}, "additional": {}}
         if isBaseline:

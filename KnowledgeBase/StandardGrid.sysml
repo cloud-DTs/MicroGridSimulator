@@ -11,11 +11,15 @@ package StandardMG {
         #entity microgrid  : MicroGrid  {}
         #entity load       : Load {}
 
-        #entity wallbox_Keba      : WallBox {}
-        #entity wallbox_Versi     : WallBox {}
-        #entity wallbox_SieChargeCC : WallBox {}
-        #entity wallbox_SieChargeD  : WallBox {}
-        #entity wallbox_SieCPC20    : WallBox {}
+        #entity wallbox_ALPHA       : WallBox {}
+        #entity wallbox_1           : WallBox {}
+        #entity wallbox_2           : WallBox {}
+        #entity wallbox_3           : WallBox {}
+        #entity wallbox_A           : WallBox {}
+        #entity wallbox_B           : WallBox {}
+        #entity wallbox_C           : WallBox {}
+        #entity wallbox_FASTCHARGER : WallBox {}
+
         #entity charging_events : ChargingEvents {}
     }
 }

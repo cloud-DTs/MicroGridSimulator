@@ -5,7 +5,6 @@ import tempfile
 import sys
 from argparse import ArgumentParser
 
-from flask import after_this_request
 
 from src.Collector.collector import collect_all_simulation_config_files
 from src.MGModel.mgmodel import MGModel
@@ -37,18 +36,22 @@ class MultiConfig:
         self.baseline = d["BaseLineSysMlPath"]
         self.additional = d["AdditionalEnvSysMlPath"]
 
-def runSysmlConverter(inputDir,outputDir):
+def runSysmlConverter(inputDir, outputDir):
     import subprocess
+
     logging.info("Running SysML Converter")
+
     result = subprocess.run(
-        ["python", "-m", "src.main", f"{inputDir}", f"{outputDir}"],
+        [sys.executable, "-u", "-m", "src.main", inputDir, outputDir],
         cwd="DigitalTwinProfileSysMLv2/",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
     )
+
     if result.returncode != 0:
-        logging.error(f"SysML Converter failed with exit code {result.returncode}")
-        sys.exit(1)
+        logging.error(
+            f"SysML Converter failed with exit code {result.returncode}"
+        )
+        raise RuntimeError("SysML Converter failed")
+
     logging.info("Finished SysML Converter")
 
 def containsTwin(name,path):

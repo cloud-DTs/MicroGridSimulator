@@ -32,3 +32,4 @@ TestOutput
 ThresholdSearch
 threshold.py
 KnowledgeBase/sim.json
+.venv

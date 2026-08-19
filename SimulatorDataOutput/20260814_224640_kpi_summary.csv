@@ -1,0 +1,4 @@
+simulation_name,simulation_run,avg_grid_import_cost,avg_grid_co2_production,count
+T20,Additonial_t20,1.3320189985949993,23.387830883907146,160854.0
+T20,BaseLine_t20,2.133645158801198,34.68034535016513,64798.0
+T20,relative_deviation_%,-37.57,-32.56,2.4824
