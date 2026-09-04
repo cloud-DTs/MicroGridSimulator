@@ -30,10 +30,6 @@ package AdditionalEnvironmentalConditions {
             :>> threshold_low {
             :>> value default "10";
         }
-        dynamic_threshold_strategy {
-            :>> value default "null";
-            :>> dataType default AttributeDataType::STRING;
-        }
             }
             :>> microgrid{
                 :>>unbalanced_module {

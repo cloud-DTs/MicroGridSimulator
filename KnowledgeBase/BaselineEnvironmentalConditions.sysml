@@ -41,7 +41,7 @@ package BaselineEnvironmentalConditions {
             :>> simulation {
                 :>> simulationName { :>> value = "BaseLineNovember"; }
                 :>> start_time { :>> value = "2025-11-01T00:00"; }
-                :>> end_time   { :>> value = "2025-11-02T00:00"; }
+                :>> end_time   { :>> value = "2025-11-03T00:00"; }
                 :>> timestep { :>> value = "900"; }
             }
 

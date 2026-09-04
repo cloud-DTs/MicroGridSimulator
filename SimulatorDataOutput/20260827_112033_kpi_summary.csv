@@ -1,0 +1,4 @@
+simulation_name,simulation_run,avg_grid_import_cost,avg_grid_co2_production,count
+November,AdditionalEnvironmentalConditions,4.897917361111111,88.68958298611112,2880.0
+November,BaselineEnvironmentalConditions,4.2179062499999995,81.57219791666667,96.0
+November,relative_deviation_%,16.12,8.73,30.0
