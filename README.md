@@ -117,9 +117,7 @@ package ScenarioAdditional {
 Rules:
 
 1. A condition can override values, but it cannot pick another variant than its baseline (for example `GridImport_Price_Cent_Per_kWh_Static` instead of `_TimeSeries_Array`).
-2. A condition may have a different length than its baseline (for example a week under a one day baseline); arrays are replaced completely.
-3. List entries subset the list slot: `w1 :> wallbox`, `car1 :> car`, `l1 :> consumer`; never `:>>`.
-4. Several baselines in one run are fine; each one becomes its own pair.
+2. Several baselines in one run are fine; each one becomes its own pair.
 
 ### Paths
 
@@ -135,27 +133,6 @@ Relative paths in the SysML files (thresholds file, `*_TimeSeries_Path`) are res
 
 Integers from 0 to 100 in descending order (`[high, mid, low]`, percent of battery SOC), for example the result of MOMoT.
 
-### Converting simulator JSON files: `convert.py`
-
-Existing simulator payloads (for example the files of the simulator team) are turned into twins with `convert.py`:
-
-```bash
-python convert.py --base 00b_baseline_week.json --name Baseline --out scenario3 01*.json 02*.json
-```
-
-| Argument | Description |
-|---|---|
-| `--base` | payload of the baseline |
-| `--name` | name of the baseline twin (default `Baseline`) |
-| `--package` | package of the baseline (default `Scenario`) |
-| `--out` | output folder (default `output`) |
-| `--other-base` | a further baseline without conditions; repeat for several |
-| `--thresholds-path` | replaces the thresholds of all payloads with a thresholds file |
-| remaining arguments | payloads of the conditions; wildcards are expanded by the script |
-
-It writes `<name>.sysml` with the baseline (all values as `default`) and `<name>Additional.sysml` with one child twin per condition that only contains the differences. Time series are written inline as arrays.
-
----
 
 ## Running
 
