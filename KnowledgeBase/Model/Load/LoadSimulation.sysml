@@ -6,25 +6,22 @@ package LoadSimulation{
 
     }
 
-    // "load": [50, 60, ...]
-    #Entity def LoadSimulation_TimeSeries_Array:>LoadSimulation{
-        #constAttribute load_timeseries:>const_attributes{
-            :>> value default "[0.0]";
-            :>> dataType = AttributeDataType::VECTOR_DOUBLE;
-        }
-    }
-
-    // csv file, loaded into "load": [...]
-    #Entity def LoadSimulation_TimeSeries_Path:>LoadSimulation{
-        #constAttribute load_timeseries_path:>const_attributes{
-            :>> value default "//";
+    // load_mode selects the form, so a child twin can switch it:
+    //   STATIC "load": [{"load_consumption"}, ...], one "x :> consumer" per load
+    //   ARRAY  "load": load_array (one value per step)
+    //   PATH   "load": csv file load_path with a column "value"
+    // the slot "consumer" itself is no load, the builder skips it
+    #Entity def LoadSimulation_Config:>LoadSimulation{
+        #constAttribute load_mode:>const_attributes{
+            :>> value default "STATIC";
             :>> dataType = AttributeDataType::STRING;
         }
-    }
-
-    // "load": [{"load_consumption": 100}, ...]: one "#entity x :> consumer" per load;
-    // the slot "consumer" itself is no load, the builder skips it
-    #Entity def LoadSimulation_Static:>LoadSimulation{
+        #constAttribute load_array:>const_attributes{
+            :>> dataType = AttributeDataType::VECTOR_DOUBLE;
+        }
+        #constAttribute load_path:>const_attributes{
+            :>> dataType = AttributeDataType::STRING;
+        }
         #entity consumer:>sbEntities:LoadConsumer[0..*];
     }
 

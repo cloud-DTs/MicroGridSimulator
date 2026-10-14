@@ -11,13 +11,11 @@ public class Simulation extends Abstract<EntityUsage> {
 	@JsonProperty("battery")
 	private SimulationBattery battery;
 
-
 	@JsonProperty("pv")
 	private Object pv;
 
 	@JsonProperty("grid")
 	private SimulationGrid grid;
-
 
 	@JsonProperty("load")
 	private Object load;
@@ -56,33 +54,32 @@ public class Simulation extends Abstract<EntityUsage> {
 		return this;
 	}
 
-	// empty PVSimulation: no "pv"
 	private Object pv(EntityUsage entity) {
-		if (is(entity, QualifiedPath.PV_SIMULATION_STATIC)) {
-			return values.decimal(attribute(entity, QualifiedPath.PV_SIMULATION_STATIC__PV_VALUE));
+		if (isLibrary(entity) || !is(entity, QualifiedPath.PV_SIMULATION_CONFIG)) {
+			return null;
 		}
-		if (is(entity, QualifiedPath.PV_SIMULATION_TIME_SERIES_ARRAY)) {
-			return values.decimals(attribute(entity, QualifiedPath.PV_SIMULATION_TIME_SERIES_ARRAY__PV_TIMESERIES));
-		}
-		if (is(entity, QualifiedPath.PV_SIMULATION_TIME_SERIES_PATH)) {
-			return values.series(attribute(entity, QualifiedPath.PV_SIMULATION_TIME_SERIES_PATH__PV_TIMESERIES_PATH), steps);
-		}
-		return new PvGenerator(experimentMapper).parse(entity).orElse(null);
+		QualifiedPath mode = QualifiedPath.PV_SIMULATION_CONFIG__PV_MODE;
+		String selected = mode(entity, mode, "STATIC", "ARRAY", "PATH", "GENERATOR");
+		return switch (selected) {
+			case "STATIC" -> values.decimal(required(entity, mode, selected, QualifiedPath.PV_SIMULATION_CONFIG__PV_VALUE));
+			case "ARRAY" -> values.decimals(required(entity, mode, selected, QualifiedPath.PV_SIMULATION_CONFIG__PV_ARRAY));
+			case "PATH" -> values.series(required(entity, mode, selected, QualifiedPath.PV_SIMULATION_CONFIG__PV_PATH), steps);
+			default -> new PvGenerator(experimentMapper).parse(entity).orElseThrow();
+		};
 	}
 
-	// empty LoadSimulation: no "load"
 	private Object load(EntityUsage entity) {
-		if (is(entity, QualifiedPath.LOAD_SIMULATION_TIME_SERIES_ARRAY)) {
-			return values.decimals(attribute(entity, QualifiedPath.LOAD_SIMULATION_TIME_SERIES_ARRAY__LOAD_TIMESERIES));
+		if (isLibrary(entity) || !is(entity, QualifiedPath.LOAD_SIMULATION_CONFIG)) {
+			return null;
 		}
-		if (is(entity, QualifiedPath.LOAD_SIMULATION_TIME_SERIES_PATH)) {
-			return values.series(attribute(entity, QualifiedPath.LOAD_SIMULATION_TIME_SERIES_PATH__LOAD_TIMESERIES_PATH), steps);
-		}
-		if (is(entity, QualifiedPath.LOAD_SIMULATION_STATIC)) {
-			return entries(entity, QualifiedPath.LOAD_SIMULATION_STATIC__CONSUMER).stream()
+		QualifiedPath mode = QualifiedPath.LOAD_SIMULATION_CONFIG__LOAD_MODE;
+		String selected = mode(entity, mode, "STATIC", "ARRAY", "PATH");
+		return switch (selected) {
+			case "ARRAY" -> values.decimals(required(entity, mode, selected, QualifiedPath.LOAD_SIMULATION_CONFIG__LOAD_ARRAY));
+			case "PATH" -> values.series(required(entity, mode, selected, QualifiedPath.LOAD_SIMULATION_CONFIG__LOAD_PATH), steps);
+			default -> entries(entity, QualifiedPath.LOAD_SIMULATION_CONFIG__CONSUMER).stream()
 					.map(consumer -> new LoadConsumer(experimentMapper).parse(consumer).map(LoadConsumer.class::cast).orElseThrow())
 					.toList();
-		}
-		return null;
+		};
 	}
 }

@@ -22,25 +22,23 @@ public class WallboxControl extends Abstract<EntityUsage> {
 
 	@Override
 	protected QualifiedPath getQualifiedPath() {
-		return QualifiedPath.WALL_BOX_CONTROL;
+		return QualifiedPath.WALL_BOX_TEST_BED;
 	}
 
 	@Override
 	public boolean isConstructable(AbstractType<?, ?> element) {
-		return !isLibrary(element) && (is(element, QualifiedPath.WALL_BOX_CONTROL_CONSTANT) || is(element, QualifiedPath.WALL_BOX_CONTROL_ADAPTIVE_PROPORTIONAL_UNIFORM));
+		return super.isConstructable(element) && EntityUsage.class.isInstance(element)
+				&& !mode(EntityUsage.class.cast(element), QualifiedPath.WALL_BOX_TEST_BED__CONTROL_MODE, "NONE", "CONSTANT", "ADAPTIVE_PROPORTIONAL_UNIFORM").equals("NONE");
 	}
 
 	@Override
 	protected Abstract<EntityUsage> map(EntityUsage element) {
-		if (is(element, QualifiedPath.WALL_BOX_CONTROL_CONSTANT)) {
-			id = values.text(attribute(element, QualifiedPath.WALL_BOX_CONTROL_CONSTANT__CONTROL_ID));
-			pvThreshold = values.integer(attribute(element, QualifiedPath.WALL_BOX_CONTROL_CONSTANT__PV_THRESHOLD));
-			strategyMode = values.text(attribute(element, QualifiedPath.WALL_BOX_CONTROL_CONSTANT__STRATEGY_MODE));
-		} else {
-			id = values.text(attribute(element, QualifiedPath.WALL_BOX_CONTROL_ADAPTIVE_PROPORTIONAL_UNIFORM__CONTROL_ID));
-			pvThreshold = values.integer(attribute(element, QualifiedPath.WALL_BOX_CONTROL_ADAPTIVE_PROPORTIONAL_UNIFORM__PV_THRESHOLD));
-			strategyMode = values.text(attribute(element, QualifiedPath.WALL_BOX_CONTROL_ADAPTIVE_PROPORTIONAL_UNIFORM__STRATEGY_MODE));
-		}
+		id = switch (mode(element, QualifiedPath.WALL_BOX_TEST_BED__CONTROL_MODE, "CONSTANT", "ADAPTIVE_PROPORTIONAL_UNIFORM")) {
+			case "CONSTANT" -> "constant-wallbox-strategy";
+			default -> "adaptive-proportional-uniform-wallbox-strategy";
+		};
+		pvThreshold = values.integer(attribute(element, QualifiedPath.WALL_BOX_TEST_BED__PV_THRESHOLD));
+		strategyMode = values.text(attribute(element, QualifiedPath.WALL_BOX_TEST_BED__STRATEGY_MODE));
 		return this;
 	}
 }

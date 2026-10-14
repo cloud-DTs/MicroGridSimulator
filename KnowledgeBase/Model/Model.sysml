@@ -6,7 +6,5 @@ package Model {
     #Twin def ST_Twin{
         #entity testbed:>libTwinEntities:TestBed[1];
         #entity simulation:>libTwinEntities:Simulation[1];
-
-        
     }
 }

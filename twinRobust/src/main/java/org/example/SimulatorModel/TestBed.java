@@ -6,7 +6,6 @@ import org.example.Model.Entity.EntityUsage;
 
 import java.util.List;
 
-
 public class TestBed extends Abstract<EntityUsage> {
 
 	@JsonProperty("battery")
@@ -26,6 +25,10 @@ public class TestBed extends Abstract<EntityUsage> {
 	public TestBed(ExperimentMapper experimentMapper, int steps) {
 		super(experimentMapper);
 		this.steps = steps;
+	}
+
+	public void removePv() {
+		pv = null;
 	}
 
 	public boolean hasPv() {

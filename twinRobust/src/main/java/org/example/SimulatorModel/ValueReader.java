@@ -24,6 +24,11 @@ public class ValueReader {
 		this.json = json;
 	}
 
+
+	public boolean hasValue(ConstAttributeUsage attribute) {
+		return raw(attribute).isPresent();
+	}
+
 	public String text(ConstAttributeUsage attribute) {
 		return raw(attribute).orElseThrow(() -> new IllegalArgumentException("'" + attribute.getName() + "' has no value"));
 	}
@@ -36,7 +41,7 @@ public class ValueReader {
 		return parse(attribute, Double::parseDouble);
 	}
 
-	// "true" / "false"
+
 	public boolean bool(ConstAttributeUsage attribute) {
 		String value = text(attribute).trim();
 		if (!value.equals("true") && !value.equals("false")) {

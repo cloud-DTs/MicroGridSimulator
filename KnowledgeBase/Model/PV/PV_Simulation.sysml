@@ -6,32 +6,26 @@ package PVSimulation{
 
     }
 
-    // "pv": 50
-    #Entity def PVSimulation_Static:>PVSimulation{
+    // pv_mode selects the form, so a child twin can switch it:
+    //   STATIC    "pv": pv_value
+    //   ARRAY     "pv": pv_array (one value per step)
+    //   PATH      "pv": csv file pv_path with a column "value"
+    //   GENERATOR "pv": {pv_start_time, pv_end_time, noise_level}; needs testbed.pv
+    #Entity def PVSimulation_Config:>PVSimulation{
+        #constAttribute pv_mode:>const_attributes{
+            :>> value default "STATIC";
+            :>> dataType = AttributeDataType::STRING;
+        }
         #constAttribute pv_value:>const_attributes{
             :>> value default "0.0";
             :>> dataType = AttributeDataType::DOUBLE;
         }
-    }
-
-    // "pv": [10, 20, ...]
-    #Entity def PVSimulation_TimeSeries_Array:>PVSimulation{
-        #constAttribute pv_timeseries:>const_attributes{
-            :>> value default "[0.0]";
+        #constAttribute pv_array:>const_attributes{
             :>> dataType = AttributeDataType::VECTOR_DOUBLE;
         }
-    }
-
-    // csv file, loaded into "pv": [...]
-    #Entity def PVSimulation_TimeSeries_Path:>PVSimulation{
-        #constAttribute pv_timeseries_path:>const_attributes{
-            :>> value default "//";
+        #constAttribute pv_path:>const_attributes{
             :>> dataType = AttributeDataType::STRING;
         }
-    }
-
-    // "pv": {"pv_start_time", "pv_end_time", "noise_level"}
-    #Entity def PVSimulation_Generator:>PVSimulation{
         #constAttribute pv_start_time:>const_attributes{
             :>> value default "06:30";
             :>> dataType = AttributeDataType::STRING;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.example.Enums.QualifiedPath;
 import org.example.Model.Entity.EntityUsage;
 
-
 public class PvGenerator extends Abstract<EntityUsage> {
 
 	@JsonProperty("pv_start_time")
@@ -22,14 +21,14 @@ public class PvGenerator extends Abstract<EntityUsage> {
 
 	@Override
 	protected QualifiedPath getQualifiedPath() {
-		return QualifiedPath.PV_SIMULATION_GENERATOR;
+		return QualifiedPath.PV_SIMULATION_CONFIG;
 	}
 
 	@Override
 	protected Abstract<EntityUsage> map(EntityUsage element) {
-		pvStartTime = values.text(attribute(element, QualifiedPath.PV_SIMULATION_GENERATOR__PV_START_TIME));
-		pvEndTime = values.text(attribute(element, QualifiedPath.PV_SIMULATION_GENERATOR__PV_END_TIME));
-		noiseLevel = values.decimal(attribute(element, QualifiedPath.PV_SIMULATION_GENERATOR__NOISE_LEVEL));
+		pvStartTime = values.text(attribute(element, QualifiedPath.PV_SIMULATION_CONFIG__PV_START_TIME));
+		pvEndTime = values.text(attribute(element, QualifiedPath.PV_SIMULATION_CONFIG__PV_END_TIME));
+		noiseLevel = values.decimal(attribute(element, QualifiedPath.PV_SIMULATION_CONFIG__NOISE_LEVEL));
 		return this;
 	}
 }

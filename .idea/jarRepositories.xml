@@ -12,6 +12,11 @@
       <option name="url" value="https://jitpack.io" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="github-dt-profile" />
+      <option name="name" value="github-dt-profile" />
+      <option name="url" value="https://maven.pkg.github.com/cloud-DTs/DigitalTwinProfileSysmlv2JavaLibrary" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Maven Central repository" />
       <option name="url" value="https://repo1.maven.org/maven2" />
@@ -20,6 +25,16 @@
       <option name="id" value="jboss.community" />
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="github-sysml-parser" />
+      <option name="name" value="github-sysml-parser" />
+      <option name="url" value="https://maven.pkg.github.com/cloud-DTs/Sysmlv2ModelParser" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="cloud-dts" />
+      <option name="name" value="cloud-dts" />
+      <option name="url" value="https://maven.pkg.github.com/cloud-DTs/Sysmlv2ModelParser" />
     </remote-repository>
   </component>
 </project>

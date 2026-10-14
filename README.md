@@ -32,7 +32,7 @@ SimulatorDataOutput/<timestamp>_kpi_summary.csv
 | Python | 3.12+ | |
 | Java (JDK) | 21 | twinRobust needs Java 21 |
 | Maven | 3.9+ | `mvn` must be on the PATH; `mvn -v` has to show Java 21 |
-
+| GitHub token | | access to the `cloud-DTs` organization and a personal access token with the `read:packages` scope |
 ---
 
 ## Setup
@@ -67,7 +67,21 @@ MicroGridSimulator/
     KnowledgeBase/Model/     simulator model
     <your folder>/           your twins, for example testfiles/
 ```
+### 4. Access to the Java libraries: `~/.m2/settings.xml`
 
+twinRobust loads its libraries from GitHub Packages. Add your token once for each repository:
+
+```xml
+<settings>
+    <servers>
+        <server>
+            <id>cloud-dts</id>
+            <username>YOUR_GITHUB_USER</username>
+            <password>YOUR_TOKEN</password>
+        </server>
+    </servers>
+</settings>
+```
 ---
 
 ## Defining experiments

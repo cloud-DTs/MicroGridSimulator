@@ -43,54 +43,42 @@ package BatteryTestBed{
         :>> dataType = AttributeDataType::VECTOR_INTEGER;
     }
 
-    // thresholds: empty = field missing
-    #ConstAttribute def Thresholds{ }
-    #ConstAttribute def Thresholds_Path:>Thresholds{
-    :>> dataType = AttributeDataType::STRING;
-}
-
-    // 0..100, descending, not empty
-    #ConstAttribute def Thresholds_Value:>Thresholds{
-        :>> dataType = AttributeDataType::VECTOR_INTEGER;
-    }
-
     // empty = no control
     #Entity def BatteryControl{
 
     }
 
+    // thresholds_mode:      ARRAY (thresholds_array, 0..100 descending) or PATH (thresholds_path, MOMoT file {"thresholds":[90,70,10]})
+    // threshold_strategy:   NONE (static thresholds), TIME_BASED or CO2_BASED
+    // co2_reward_mode:      ARRAY (co2_reward_array, renewable share 0..1 per step) or PATH (co2_reward_path); only for CO2_BASED
     #Entity def BatteryControl_GridFriendly:>BatteryControl{
         #constAttribute control_ID:>const_attributes{
             :>> value = "grid-friendly";
             :>> dataType = AttributeDataType::STRING;
         }
-        #constAttribute thresholds:>const_attributes:Thresholds{ :>> value default "[90, 70, 10]"; }
-        #entity threshold_strategy:>sbEntities:ThresholdStrategy[1];
-    }
-
-    // empty = static thresholds ("dynamic_threshold_strategy" missing = null)
-    #Entity def ThresholdStrategy{
-
-    }
-
-    
-
-    // "dynamic_threshold_strategy": "time_based"
-    #Entity def ThresholdStrategy_TimeBased:>ThresholdStrategy{
-
-    }
-
-    // "dynamic_threshold_strategy": "co2_based", co2_reward = renewable share 0..1 per step
-    #Entity def ThresholdStrategy_Co2Based_TimeSeries_Array:>ThresholdStrategy{
-        #constAttribute co2_reward:>const_attributes{
-            :>> value default "[0.0]";
+        #constAttribute thresholds_mode:>const_attributes{
+            :>> value default "ARRAY";
+            :>> dataType = AttributeDataType::STRING;
+        }
+        #constAttribute thresholds_array:>const_attributes{
+            :>> value default "[90, 70, 10]";
+            :>> dataType = AttributeDataType::VECTOR_INTEGER;
+        }
+        #constAttribute thresholds_path:>const_attributes{
+            :>> dataType = AttributeDataType::STRING;
+        }
+        #constAttribute threshold_strategy:>const_attributes{
+            :>> value default "NONE";
+            :>> dataType = AttributeDataType::STRING;
+        }
+        #constAttribute co2_reward_mode:>const_attributes{
+            :>> value default "ARRAY";
+            :>> dataType = AttributeDataType::STRING;
+        }
+        #constAttribute co2_reward_array:>const_attributes{
             :>> dataType = AttributeDataType::VECTOR_DOUBLE;
         }
-    }
-
-    #Entity def ThresholdStrategy_Co2Based_TimeSeries_Path:>ThresholdStrategy{
         #constAttribute co2_reward_path:>const_attributes{
-            :>> value default "//";
             :>> dataType = AttributeDataType::STRING;
         }
     }

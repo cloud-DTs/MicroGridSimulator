@@ -11,7 +11,7 @@ import java.time.format.DateTimeParseException;
 
 public class InitialValues extends Abstract<EntityUsage> {
 
-	// seconds
+
 	@JsonProperty("TIMESTEP")
 	private Long timestep;
 
@@ -30,7 +30,6 @@ public class InitialValues extends Abstract<EntityUsage> {
 		super(experimentMapper);
 	}
 
-	// number of simulation steps, the length every time series is cut or repeated to
 	public int steps() {
 		return steps;
 	}

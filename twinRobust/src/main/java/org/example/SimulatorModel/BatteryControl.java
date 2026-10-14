@@ -38,22 +38,23 @@ public class BatteryControl extends Abstract<EntityUsage> {
 	protected Abstract<EntityUsage> map(EntityUsage element) {
 		id = values.text(attribute(element, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__CONTROL_ID));
 
-		ConstAttributeUsage thresholdAttribute = attribute(element, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLDS);
-		if (is(thresholdAttribute, QualifiedPath.THRESHOLDS_VALUE)) {
-			thresholds = values.integers(thresholdAttribute);
-		} else if (is(thresholdAttribute, QualifiedPath.THRESHOLDS_PATH)) {
-			thresholds = values.thresholdsFile(thresholdAttribute);
-		}
+		QualifiedPath thresholdsMode = QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLDS_MODE;
+		String thresholdsSelected = mode(element, thresholdsMode, "ARRAY", "PATH");
+		thresholds = thresholdsSelected.equals("ARRAY")
+				? values.integers(required(element, thresholdsMode, thresholdsSelected, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLDS_ARRAY))
+				: values.thresholdsFile(required(element, thresholdsMode, thresholdsSelected, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLDS_PATH));
 
-		EntityUsage strategy = entity(element.getEntities(), QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLD_STRATEGY);
-		if (is(strategy, QualifiedPath.THRESHOLD_STRATEGY_TIME_BASED)) {
+		// NONE: static thresholds, the key is left out (same as null for the simulator)
+		String strategy = mode(element, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__THRESHOLD_STRATEGY, "NONE", "TIME_BASED", "CO2_BASED");
+		if (strategy.equals("TIME_BASED")) {
 			dynamicThresholdStrategy = "time_based";
-		} else if (is(strategy, QualifiedPath.THRESHOLD_STRATEGY_CO2_BASED_TIME_SERIES_ARRAY)) {
+		} else if (strategy.equals("CO2_BASED")) {
 			dynamicThresholdStrategy = "co2_based";
-			co2Reward = values.decimals(attribute(strategy, QualifiedPath.THRESHOLD_STRATEGY_CO2_BASED_TIME_SERIES_ARRAY__CO2_REWARD));
-		} else if (is(strategy, QualifiedPath.THRESHOLD_STRATEGY_CO2_BASED_TIME_SERIES_PATH)) {
-			dynamicThresholdStrategy = "co2_based";
-			co2Reward = values.series(attribute(strategy, QualifiedPath.THRESHOLD_STRATEGY_CO2_BASED_TIME_SERIES_PATH__CO2_REWARD_PATH), steps);
+			QualifiedPath rewardMode = QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__CO2_REWARD_MODE;
+			String rewardSelected = mode(element, rewardMode, "ARRAY", "PATH");
+			co2Reward = rewardSelected.equals("ARRAY")
+					? values.decimals(required(element, rewardMode, rewardSelected, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__CO2_REWARD_ARRAY))
+					: values.series(required(element, rewardMode, rewardSelected, QualifiedPath.BATTERY_CONTROL_GRID_FRIENDLY__CO2_REWARD_PATH), steps);
 		}
 		return this;
 	}

@@ -38,7 +38,6 @@ public abstract class Abstract<T extends AbstractType<?,?>> {
 
 	protected abstract QualifiedPath getQualifiedPath();
 
-
 	protected abstract Abstract<T> map(T element);
 
 	protected boolean isLibrary(AbstractType<?,?> element){
@@ -49,7 +48,6 @@ public abstract class Abstract<T extends AbstractType<?,?>> {
 		return entities.stream().filter(entity -> experimentMapper.specialices(entity, slot)).findFirst()
 				.orElseThrow(() -> new IllegalStateException("Slot " + slot.getQualifiedName() + " not found"));
 	}
-
 
 	protected List<EntityUsage> entries(EntityUsage owner, QualifiedPath slot) {
 		return owner.getEntities().stream()
@@ -66,5 +64,21 @@ public abstract class Abstract<T extends AbstractType<?,?>> {
 
 	protected boolean is(AbstractType<?,?> element, QualifiedPath variant) {
 		return experimentMapper.specialices(element, variant);
+	}
+
+	protected String mode(EntityUsage owner, QualifiedPath feature, String... allowed) {
+		String selected = values.text(attribute(owner, feature)).trim();
+		if (!List.of(allowed).contains(selected)) {
+			throw new IllegalArgumentException("'" + owner.getName() + "': " + feature.getName() + " '" + selected + "' is unknown, use " + String.join(", ", allowed));
+		}
+		return selected;
+	}
+
+	protected ConstAttributeUsage required(EntityUsage owner, QualifiedPath modeFeature, String mode, QualifiedPath feature) {
+		ConstAttributeUsage attribute = attribute(owner, feature);
+		if (!values.hasValue(attribute)) {
+			throw new IllegalArgumentException("'" + owner.getName() + "': " + modeFeature.getName() + " is " + mode + ", but " + feature.getName() + " has no value");
+		}
+		return attribute;
 	}
 }

@@ -5,7 +5,6 @@ import org.example.Enums.QualifiedPath;
 import org.example.Model.Entity.EntityUsage;
 import org.example.Model.Twin.TwinDefinition;
 
-// the simulator payload of one twin: {"testbed": .., "simulation": ..}
 public class Model extends Abstract<TwinDefinition> {
 
 	@JsonProperty("testbed")
@@ -35,7 +34,6 @@ public class Model extends Abstract<TwinDefinition> {
 		EntityUsage testbedEntity = entity(element.getEntities(), QualifiedPath.ST_TWIN__TESTBED);
 		EntityUsage simulationEntity = entity(element.getEntities(), QualifiedPath.ST_TWIN__SIMULATION);
 
-
 		int steps = new InitialValues(experimentMapper)
 				.parse(entity(simulationEntity.getEntities(), QualifiedPath.SIMULATION__INITIAL_VALUES))
 				.map(InitialValues.class::cast).orElseThrow(() -> new IllegalStateException("Twin '" + element.getName() + "' has no initial_values"))
@@ -44,8 +42,11 @@ public class Model extends Abstract<TwinDefinition> {
 		testbed = new TestBed(experimentMapper, steps).parse(testbedEntity).map(TestBed.class::cast).orElseThrow();
 		simulation = new Simulation(experimentMapper, steps).parse(simulationEntity).map(Simulation.class::cast).orElseThrow();
 
-		if (testbed.hasPv() != simulation.hasPvGenerator()) {
-			throw new IllegalArgumentException("Twin '" + element.getName() + "': testbed.pv requires simulation.pv to be PVSimulation_Generator and the other way round");
+		if (simulation.hasPvGenerator() && !testbed.hasPv()) {
+			throw new IllegalArgumentException("Twin '" + element.getName() + "': pv_mode GENERATOR needs testbed.pv (PVTestBed_Config)");
+		}
+		if (!simulation.hasPvGenerator()) {
+			testbed.removePv();
 		}
 		return this;
 	}

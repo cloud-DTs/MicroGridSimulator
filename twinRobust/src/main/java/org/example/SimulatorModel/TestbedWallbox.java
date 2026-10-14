@@ -29,8 +29,7 @@ public class TestbedWallbox extends Abstract<EntityUsage> {
 	protected Abstract<EntityUsage> map(EntityUsage element) {
 		name = values.text(attribute(element, QualifiedPath.WALL_BOX_TEST_BED__NAME));
 		maxPowerOutput = values.integer(attribute(element, QualifiedPath.WALL_BOX_TEST_BED__MAX_POWER_OUTPUT));
-		control = new WallboxControl(experimentMapper).parse(entity(element.getEntities(), QualifiedPath.WALL_BOX_TEST_BED__CONTROL))
-				.map(WallboxControl.class::cast).orElse(null);
+		control = new WallboxControl(experimentMapper).parse(element).map(WallboxControl.class::cast).orElse(null);
 		return this;
 	}
 }
