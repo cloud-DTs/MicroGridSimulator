@@ -32,3 +32,6 @@ TestOutput
 ThresholdSearch
 threshold.py
 KnowledgeBase/sim.json
+/testfiles/
+/SimulatorPayloads/
+/SimulatorDataOutput/

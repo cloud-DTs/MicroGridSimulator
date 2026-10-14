@@ -1,8 +1,0 @@
-[
-  {
-    "name":"November",
-    "BaseLineSysMlPath": "./KnowledgeBase/BaselineEnvironmentalConditions.sysml",
-    "AdditionalEnvSysMlPath": "./KnowledgeBase/AdditionalEnvironmentalConditions.sysml"
-
-  }
-]

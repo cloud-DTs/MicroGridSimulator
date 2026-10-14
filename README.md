@@ -1,23 +1,23 @@
-# MicroGrid Simulator — Knowledge Base Preparer
+# MicroGrid Simulator: TwinRobust Experiment Runner
 
-This tool connects a **SysML v2 Digital Twin model** to the **MicroGrid Simulator API**.
-It reads your experiment configuration from SysML files, converts them into simulator-ready JSON payloads, runs the simulations, and saves the results as a CSV for analysis.
+This tool runs robustness experiments for the MicroGrid Simulator, defined as **SysML v2 twins**.
+A baseline twin describes the testbed and the simulation; every additional condition is a child twin that only redefines what differs from the baseline.
+`twinRobust` (Java) turns the twins into simulator payloads, `twinrobust.py` runs them on the simulator API and writes the results and a KPI summary.
 
 ---
 
 ## Architecture
 
 ```
-multi_config.json              ← Experiment pair definitions
+KnowledgeBase/Model/*.sysml          simulator model (ST_Twin, variants, defaults)
+<your folder>/*.sysml                baseline twins and their child twins
         ↓
-KnowledgeBase/*.sysml          ← Your SysML experiment files
+twinRobust (Java, Maven)             SysML twins to simulator payloads
         ↓
-DigitalTwinProfileSysMLv2      ← SysML v2 Converter
+SimulatorPayloads/<timestamp>/*.json one payload per twin
+SimulatorPayloads/<timestamp>/experiments.json
         ↓
-(temp)/*/config_hierarchy.json
-(temp)/*/config_iot_devices.json
-        ↓
-MicroGridSimulator (this tool) ← KB Preparer + Experiment Runner
+twinrobust.py                        runs all payloads over the SSH tunnel
         ↓
 SimulatorDataOutput/<timestamp>.csv
 SimulatorDataOutput/<timestamp>_kpi_summary.csv
@@ -27,138 +27,105 @@ SimulatorDataOutput/<timestamp>_kpi_summary.csv
 
 ## Prerequisites
 
-- Docker
-- Python 3.12+
+| Tool | Version | Note |
+|---|---|---|
+| Python | 3.12+ | |
+| Java (JDK) | 21 | twinRobust needs Java 21 |
+| Maven | 3.9+ | `mvn` must be on the PATH; `mvn -v` has to show Java 21 |
 
 ---
 
 ## Setup
 
-### 1. Start the SysML v2 Docker environment
-
-```bash
-cd DigitalTwinProfileSysMLv2/apiserver
-docker-compose up -d
-cd ../..
-```
-
-### 2. Create and activate a Python virtual environment
+### 1. Python environment
 
 ```bash
 python3.12 -m venv .venv
-source .venv/bin/activate       # Linux/Mac
-.venv\Scripts\activate          # Windows
+source .venv/bin/activate
+.venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 3. Install dependencies
+### 2. Simulator connection: `.env`
 
-```bash
-pip install -r requirements.txt
+```
+SSH_HOST=...
+SSH_USERNAME=...
+SSH_PASSWORD=...
+SIM_HOST=...
+SIM_PORT=...
+```
+
+The simulator API is reached through an SSH tunnel to `SIM_HOST:1337`, forwarded to `127.0.0.1:SIM_PORT`.
+
+### 3. Folder layout
+
+```
+MicroGridSimulator/
+    twinrobust.py
+    twinRobust/              Java project (pom.xml)
+    KnowledgeBase/Model/     simulator model
+    <your folder>/           your twins, for example testfiles/
 ```
 
 ---
 
-## Configuration
+## Defining experiments
 
-### Experiment pairs — `multi_config.json`
+### Baseline and conditions
 
-Define one or more baseline/additional pairs:
-
-```json
-[
-  {
-    "name": "November",
-    "BaseLineSysMlPath":      "KnowledgeBase/BaselineEnvironmentalConditions.sysml",
-    "AdditionalEnvSysMlPath": "KnowledgeBase/AdditionalEnvironmentalConditions.sysml"
-  },
-  {
-    "name": "December",
-    "BaseLineSysMlPath":      "KnowledgeBase/BaselineDecember.sysml",
-    "AdditionalEnvSysMlPath": "KnowledgeBase/AdditionalDecember.sysml"
-  }
-]
-```
-
-| Field | Description |
-|---|---|
-| `name` | Identifier for this experiment pair, used in output filenames and KPI summary |
-| `BaseLineSysMlPath` | Path to the baseline SysML file |
-| `AdditionalEnvSysMlPath` | Path to the additional SysML file |
-
-### SysML file structure
-
-Both baseline and additional files follow the same structure:
+A **baseline** is a twin that specializes `ST_Twin` directly. Every twin that specializes a baseline is one **condition** of it.
+Write the values of the baseline with `default`, so the conditions can override them with `=`.
 
 ```sysml
-package BaselineEnvironmentalConditions {
+package Scenario {
     private import MetaModelDigitalTwin::*;
-    private import ModelDefault::*;
-    private import StandardMG::*;
+    public import Model::*;
 
-    #Twin def Base :> StTwin {
-
-        :>> pv {
-            :>> pv_timeseries_path { :>> value = "./data/pv_nov.csv"; }
+    #Twin def Baseline :> ST_Twin {
+        :>> testbed {
+            :>> battery : BatteryTestBed_Config {
+                :>> control : BatteryControl_GridFriendly {
+                    :>> thresholds : Thresholds_Path { :>> value default "testfiles/Thresholds.json"; }
+                }
+            }
         }
-
-        :>> grid {
-            :>> import_price_timeseries_path { :>> value = "./data/prices_nov.csv"; }
-            :>> export_price_timeseries_path { :>> value = "./data/prices_nov.csv"; }
-            :>> co2_per_kWh_timeseries_path  { :>> value = "./data/co2_nov.csv"; }
-        }
-
-        :>> battery {
-            :>> co2_reward_timeseries_path   { :>> value = "./data/co2_nov.csv"; }
-            :>> dynamic_threshold_strategy   { :>> value = "co2_based"; }
-        }
-
-        :>> microgrid {
-            :>> unbalanced_module        { :>> value = "0"; }
-            :>> number_charging_events   { :>> value = "15"; }
-        }
-
         :>> simulation {
-            :>> simulationName { :>> value = "BaseLineNovember"; }
-            :>> start_time     { :>> value = "2025-11-01T00:00"; }
-            :>> end_time       { :>> value = "2025-11-02T00:00"; }
+            :>> battery : BatterySimulation_Config { :>> init_soc { :>> value default "0.5"; } }
+            :>> grid : GridSimulation_Config { :>> grid_limit { :>> value default "25000"; } }
+            :>> initial_values {
+                :>> timestep { :>> value default "10"; }
+                :>> start_time { :>> value default "2025-08-18T00:00"; }
+                :>> end_time { :>> value default "2025-08-25T00:00"; }
+            }
         }
+    }
+}
 
-        car1 :> charging_events {
-            :>> arrival_date       { :>> value = "2025-11-01T08:00"; }
-            :>> departure_date     { :>> value = "2025-11-01T16:00"; }
-            :>> preference_wallbox { :>> value = "wallbox_Keba"; }
-        }
+package ScenarioAdditional {
+    private import MetaModelDigitalTwin::*;
+    private import Model::*;
+    private import Scenario::*;
 
-        :>> load {
-            :>> load_timeseries_path { :>> value = "./data/load_nov.csv"; }
-        }
+    // only what differs from the baseline
+    #Twin def Winter :> Baseline {
+        :>> simulation { :>> battery { :>> init_soc { :>> value = "0.2"; } } }
     }
 }
 ```
 
-> **Important:** The baseline Twin name must contain `Base` (case-insensitive) so the KPI summary can identify it correctly — e.g. `#Twin def Base` or `#Twin def BaseLineNovember`.
+Rules:
 
-### Timeseries CSV format
+1. A condition can override values, but it cannot pick another variant than its baseline (for example `GridImport_Price_Cent_Per_kWh_Static` instead of `_TimeSeries_Array`).
+2. A condition may have a different length than its baseline (for example a week under a one day baseline); arrays are replaced completely.
+3. List entries subset the list slot: `w1 :> wallbox`, `car1 :> car`, `l1 :> consumer`; never `:>>`.
+4. Several baselines in one run are fine; each one becomes its own pair.
 
-All timeseries files (PV, prices, CO2, load) must be CSV files with a single `value` column.
-The number of rows must exactly match the number of simulation steps:
+### Paths
 
-```
-steps = (end_time - start_time) / timestep
-```
+Relative paths in the SysML files (thresholds file, `*_TimeSeries_Path`) are resolved against the folder `twinrobust.py` is started from, so `testfiles/Thresholds.json` means `MicroGridSimulator/testfiles/Thresholds.json`.
 
-Example for 1 day with `timestep = 3600s`:
-
-```csv
-value
-0.0
-0.0
-50.0
-200.0
-500.0
-```
-
-### Battery thresholds — `KnowledgeBase/Thresholds.json`
+### Battery thresholds: `Thresholds.json`
 
 ```json
 {
@@ -166,66 +133,78 @@ value
 }
 ```
 
-Values represent `[threshold_high, threshold_mid, threshold_low]` as percentage of battery SOC.
+Integers from 0 to 100 in descending order (`[high, mid, low]`, percent of battery SOC), for example the result of MOMoT.
+
+### Converting simulator JSON files: `convert.py`
+
+Existing simulator payloads (for example the files of the simulator team) are turned into twins with `convert.py`:
+
+```bash
+python convert.py --base 00b_baseline_week.json --name Baseline --out scenario3 01*.json 02*.json
+```
+
+| Argument | Description |
+|---|---|
+| `--base` | payload of the baseline |
+| `--name` | name of the baseline twin (default `Baseline`) |
+| `--package` | package of the baseline (default `Scenario`) |
+| `--out` | output folder (default `output`) |
+| `--other-base` | a further baseline without conditions; repeat for several |
+| `--thresholds-path` | replaces the thresholds of all payloads with a thresholds file |
+| remaining arguments | payloads of the conditions; wildcards are expanded by the script |
+
+It writes `<name>.sysml` with the baseline (all values as `default`) and `<name>Additional.sysml` with one child twin per condition that only contains the differences. Time series are written inline as arrays.
 
 ---
 
 ## Running
 
 ```bash
-# uses multi_config.json by default
-python main.py
-
-# or with a custom config file
-python main.py --config my_experiment.json
+python twinrobust.py <sysml file or folder> ...
 ```
 
-| Argument | Default | Description |
-|---|---|---|
-| `--config` | `multi_config.json` | Path to the experiment pair config JSON |
+Example:
 
-The tool will automatically:
-1. Copy the SysML files into a temporary directory
-2. Run the SysML converter
-3. Build simulator payloads
-4. Run all simulations via SSH tunnel
-5. Save results and KPI summary
+```bash
+python twinrobust.py testfiles/
+```
+
+`KnowledgeBase/Model` is added automatically, unless one of the given folders already contains it.
+
+The tool will:
+
+1. run twinRobust through Maven and write the payloads and `experiments.json` to `SimulatorPayloads/<timestamp>/`
+2. open the SSH tunnel
+3. run all simulations, at most 6 in parallel
+4. save the raw results and the KPI summary
 
 ---
 
 ## Output
 
-Results are saved to `SimulatorDataOutput/`:
+### Raw results: `SimulatorDataOutput/<timestamp>.csv`
 
-```
-SimulatorDataOutput/<PairNames>_<timestamp>.csv
-SimulatorDataOutput/<PairNames>_<timestamp>_kpi_summary.csv
-```
+One row per time step with all simulator output columns, plus:
 
-### Raw results CSV
-
-One row per timestep, all simulator output columns plus identifiers:
-
-| datetime | grid_import_cost | grid_co2_production | simulation_name | simulation_run |
-|---|---|---|---|---|
-| 2025-11-01T00:00 | 12.3 | 45.1 | November | BaselineEnvironmentalConditions |
-| ... | | | | |
-
-### KPI summary CSV
-
-Aggregated averages and relative deviation per pair:
-
-| simulation_name | simulation_run | avg_grid_import_cost | avg_grid_co2_production | count |
-|---|---|---|---|---|
-| November | BaselineEnvironmentalConditions | 12.3 | 45.1 | 720 |
-| November | AdditionalEnvironmentalConditions | 14.1 | 48.3 | 720 |
-| November | relative_deviation_% | 14.63 | 7.1 | 1.0 |
-| December | BaselineDecember | ... | ... | 744 |
-| ... | | | | |
-
-### Key KPIs
-
-| Column | Unit |
+| Column | Description |
 |---|---|
-| `grid_import_cost` | cents |
-| `grid_co2_production` | gCO2eq |
+| `simulation_name` | the pair, named after its baseline |
+| `simulation_run` | the twin |
+| `role` | `base` or `additional` |
+| `grid_limit` | grid limit of the run in W |
+| `timestep` | time step of the run in seconds |
+
+### KPI summary: `SimulatorDataOutput/<timestamp>_kpi_summary.csv`
+
+One row per run, followed by one `relative_deviation_%` row per condition.
+
+| KPI | Unit | Computation |
+|---|---|---|
+| `grid_import_cost_per_day` | cents per day | mean of `grid_import_cost` per step × steps per day (86400 / timestep) |
+| `grid_co2_production_per_day` | gCO2eq per day | mean of `grid_co2_production` per step × steps per day |
+| `grid_limit_violation_rate` | share of time | steps with `grid_import > grid_limit` / all steps |
+
+Relative deviation: `(condition − baseline) / baseline × 100`. If the baseline value is 0, the deviation is left empty.
+
+Values per day make a one day baseline comparable with week long conditions. The violation rate counts time, not events: one step over the limit counts as one time step.
+
