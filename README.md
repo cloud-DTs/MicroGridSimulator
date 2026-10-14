@@ -9,7 +9,7 @@ A baseline twin describes the testbed and the simulation; every additional condi
 ## Architecture
 
 ```
-KnowledgeBase/Model/*.sysml          simulator model (ST_Twin, variants, defaults)
+KnowledgeBase/Model/*.sysml          simulator model (ST_Twin, modes, defaults)
 <your folder>/*.sysml                baseline twins and their child twins
         ↓
 twinRobust (Java, Maven)             SysML twins to simulator payloads
@@ -32,7 +32,8 @@ SimulatorDataOutput/<timestamp>_kpi_summary.csv
 | Python | 3.12+ | |
 | Java (JDK) | 21 | twinRobust needs Java 21 |
 | Maven | 3.9+ | `mvn` must be on the PATH; `mvn -v` has to show Java 21 |
-| GitHub token | | access to the `cloud-DTs` organization and a personal access token with the `read:packages` scope |
+| GitHub token | | access to the `cloud-DTs` organization and a personal access token (classic) with the `read:packages` scope |
+
 ---
 
 ## Setup
@@ -67,9 +68,10 @@ MicroGridSimulator/
     KnowledgeBase/Model/     simulator model
     <your folder>/           your twins, for example testfiles/
 ```
+
 ### 4. Access to the Java libraries: `~/.m2/settings.xml`
 
-twinRobust loads its libraries from GitHub Packages. Add your token once for each repository:
+twinRobust loads its libraries from GitHub Packages. All of them use the repository id `cloud-dts`, so one server entry is enough:
 
 ```xml
 <settings>
@@ -82,6 +84,9 @@ twinRobust loads its libraries from GitHub Packages. Add your token once for eac
     </servers>
 </settings>
 ```
+
+The file has to be in the home directory of the environment Maven runs in.
+
 ---
 
 ## Defining experiments
@@ -100,13 +105,17 @@ package Scenario {
         :>> testbed {
             :>> battery : BatteryTestBed_Config {
                 :>> control : BatteryControl_GridFriendly {
-                    :>> thresholds : Thresholds_Path { :>> value default "testfiles/Thresholds.json"; }
+                    :>> thresholds_mode { :>> value default "PATH"; }
+                    :>> thresholds_path { :>> value default "testfiles/Thresholds.json"; }
                 }
             }
         }
         :>> simulation {
             :>> battery : BatterySimulation_Config { :>> init_soc { :>> value default "0.5"; } }
-            :>> grid : GridSimulation_Config { :>> grid_limit { :>> value default "25000"; } }
+            :>> grid : GridSimulation_Config {
+                :>> import_price_mode { :>> value default "REALTIME"; }
+                :>> grid_limit { :>> value default "25000"; }
+            }
             :>> initial_values {
                 :>> timestep { :>> value default "10"; }
                 :>> start_time { :>> value default "2025-08-18T00:00"; }
@@ -123,19 +132,48 @@ package ScenarioAdditional {
 
     // only what differs from the baseline
     #Twin def Winter :> Baseline {
-        :>> simulation { :>> battery { :>> init_soc { :>> value = "0.2"; } } }
+        :>> simulation {
+            :>> battery { :>> init_soc { :>> value = "0.2"; } }
+            :>> grid {
+                :>> import_price_mode { :>> value = "ARRAY"; }
+                :>> import_price_array { :>> value = "[5.7, 5.7, 6.1, ...]"; }
+            }
+        }
     }
 }
 ```
 
 Rules:
 
-1. A condition can override values, but it cannot pick another variant than its baseline (for example `GridImport_Price_Cent_Per_kWh_Static` instead of `_TimeSeries_Array`).
-2. Several baselines in one run are fine; each one becomes its own pair.
+1. A condition overrides only what differs; everything else is inherited from the baseline, up to the defaults of the model.
+2. A condition may choose another form than its baseline by overriding the `*_mode` attribute (see Modes), for example live prices in the baseline and a time series in a condition.
+3. A condition may have another length than its baseline (for example a week under a one day baseline); arrays are replaced completely.
+4. List entries subset the list slot: `w1 :> wallbox`, `l1 :> consumer`, `car1 :> car`; never `:>>`.
+5. Several baselines in one run are fine; each one becomes its own pair.
+
+### Modes
+
+Values that can take several forms are selected with a `*_mode` attribute. The attribute the mode selects has to have a value, otherwise twinRobust stops with an error that names it. The other attributes are ignored.
+
+| Where | Mode attribute | Modes | Attribute used |
+|---|---|---|---|
+| `simulation.grid` | `import_price_mode` | `STATIC`, `ARRAY`, `PATH`, `REALTIME` | `import_price_value`, `import_price_array`, `import_price_path`; REALTIME fetches live prices |
+| `simulation.grid` | `export_price_mode` | `STATIC`, `ARRAY`, `PATH` | `export_price_value`, `export_price_array`, `export_price_path` |
+| `simulation.grid` | `co2_mode` | `STATIC`, `ARRAY`, `PATH`, `REALTIME` | `co2_value`, `co2_array`, `co2_path`; REALTIME fetches the live CO2 intensity |
+| `simulation.pv` | `pv_mode` | `STATIC`, `ARRAY`, `PATH`, `GENERATOR` | `pv_value`, `pv_array`, `pv_path`; GENERATOR uses `pv_start_time`, `pv_end_time`, `noise_level` and needs `testbed.pv` |
+| `simulation.load` | `load_mode` | `STATIC`, `ARRAY`, `PATH` | the `consumer` entries, `load_array`, `load_path` |
+| battery control | `thresholds_mode` | `ARRAY`, `PATH` | `thresholds_array`, `thresholds_path` (thresholds file) |
+| battery control | `threshold_strategy` | `NONE`, `TIME_BASED`, `CO2_BASED` | CO2_BASED uses `co2_reward_mode` |
+| battery control | `co2_reward_mode` | `ARRAY`, `PATH` | `co2_reward_array`, `co2_reward_path` |
+| wallbox | `control_mode` | `NONE`, `CONSTANT`, `ADAPTIVE_PROPORTIONAL_UNIFORM` | `pv_threshold`, `strategy_mode` |
+
+`testbed.pv` is only written with `pv_mode GENERATOR`.
+
+Defaults of the model: the modes `STATIC` (grid, pv, load), `ARRAY` (thresholds, co2 reward), `NONE` (strategy, wallbox control); `*_value` is `0`, `thresholds_array` is `[90, 70, 10]`. The `*_array` and `*_path` attributes have no default, so a missing time series is reported instead of silently replaced.
 
 ### Paths
 
-Relative paths in the SysML files (thresholds file, `*_TimeSeries_Path`) are resolved against the folder `twinrobust.py` is started from, so `testfiles/Thresholds.json` means `MicroGridSimulator/testfiles/Thresholds.json`.
+Relative paths in the SysML files (`thresholds_path` and every `*_path`) are resolved against the folder `twinrobust.py` is started from, so `testfiles/Thresholds.json` means `MicroGridSimulator/testfiles/Thresholds.json`.
 
 ### Battery thresholds: `Thresholds.json`
 
@@ -147,6 +185,7 @@ Relative paths in the SysML files (thresholds file, `*_TimeSeries_Path`) are res
 
 Integers from 0 to 100 in descending order (`[high, mid, low]`, percent of battery SOC), for example the result of MOMoT.
 
+---
 
 ## Running
 
@@ -198,4 +237,3 @@ One row per run, followed by one `relative_deviation_%` row per condition.
 Relative deviation: `(condition − baseline) / baseline × 100`. If the baseline value is 0, the deviation is left empty.
 
 Values per day make a one day baseline comparable with week long conditions. The violation rate counts time, not events: one step over the limit counts as one time step.
-
